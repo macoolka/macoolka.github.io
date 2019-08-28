@@ -1,0 +1,1209 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>Static e runtime checking in JavaScript</title>
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+		<link rel="stylesheet" href="../css/reveal.css">
+		<link rel="stylesheet" href="../css/serif.css">
+
+		<!-- Code syntax highlighting -->
+		<link rel="stylesheet" href="../css/zenburn.css">
+		<style>
+		pre code.hljs {
+			padding: 15px;
+		}
+		</style>
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? '../css/pdf.css' : '../css/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="../js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<div class="slides">
+
+				<section>
+					<h2>Static e runtime checking in JavaScript</h2>
+					<p>TypeScript, Flow, <del>AtScript</del></p>
+				</section>
+
+				<section data-markdown>
+					## Giulio Canti
+
+					### web developer @ madai ltd
+
+					### Matematico
+				</section>
+
+				<section data-markdown>
+					## Sommario
+
+					1. ### Teoria (degli insiemi)
+					- ### Pratica (TypeScript, Flow, AtScript)
+					- ### Terzo tempo
+				</section>
+
+				<section data-markdown>
+					## Introduzione
+
+					1. ### cosa sono i tipi?
+					- ### a cosa servono?
+					- ### **static** type checking?
+					- ### **runtime** type checking?
+				</section>
+
+				<!--
+				<section data-markdown>
+					### Da un grande potere...
+
+```
+var x = 1;
+x = 3;
+x = 'a';
+```
+				</section>
+				-->
+
+				<section>
+					<h2>Linguaggio dinamico</h2>
+					<pre><code>
+function Person(name, surname, age) {
+	this.name = name;
+	this.surname = surname;
+	this.age = age;
+}
+					</code></pre>
+					<pre class="fragment"><code>
+var person = new Person(true, true, true); // WTF!
+					</code></pre>
+				</section>
+
+				<section>
+					<h2>Static type checking</h2>
+					<pre><code>
+function Person(name: string, surname: string, age: number) {
+	this.name = name;
+	this.surname = surname;
+	this.age = age;
+}
+					</code></pre>
+					<pre class="fragment"><code>
+var person = new Person(true, true, true); // TypeScript complains
+					</code></pre>
+					<pre class="fragment"><code>
+var person = new Person("", null, -1); // WTF!
+					</code></pre>
+				</section>
+
+				<section>
+					<h2>Runtime type checking</h2>
+					<pre><code>
+function Person(name, surname, age) {
+
+	assert(typeof name === 'string' && name);
+	assert(typeof surname === 'string' && surname);
+	assert(typeof age === 'number' && age >= 0);
+
+	this.name = name;
+	this.surname = surname;
+	this.age = age;
+}
+					</code></pre>
+					<pre class="fragment"><code>
+var person = new Person("", null, -1); // throws
+					</code></pre>
+				</section>
+
+				<section data-markdown>
+					## Predicato
+
+					Una funzione con arità 1 e che restituisce un booleano
+
+```
+// (x: any) => boolean
+function isString(x) {
+	return typeof x === 'string';
+}
+```
+
+Alcune API che utilizzano i predicati...
+
+```
+Array.prototype.filter
+Array.prototype.some
+Array.prototype.every
+
+[1, 'a', 2].filter(isString); // => ['a']
+```
+				</section>
+
+				<section data-markdown>
+					## `assert()`
+```
+function assert(guard, message) {
+	if (guard !== true) {
+		debugger; // <= potete ispezionare lo stack
+		throw new TypeError(message || 'assert failed');
+	}
+}
+```
+				</section>
+
+				<section data-markdown>
+					## Un `TypeError` è per definizione un baco
+				</section>
+
+				<section>
+					<h2>asserts !== validations</h2>
+					<img src="img/io.png" style="border: 0; padding: 1em;"/>
+				</section>
+
+				<section data-markdown>
+					# Teoria
+					(e runtime checking)
+				</section>
+
+				<section>
+					<h2>Per Martin-Löf</h1>
+					<p>Logician, philosopher, and mathematical statistician (1942)</p>
+					<img src="img/martin-lof.jpg"/>
+				</section>
+
+				<section data-markdown>
+					# Insiemi
+
+					"Un insieme è una collezione di oggetti"
+
+					Il concetto di insieme è considerato primitivo ed intuitivo
+				</section>
+
+				<section data-markdown>
+					## Tipi ⇄ Insiemi
+
+					Esempio: il tipo `Boolean` è l'insieme che contiene i due elementi `true` e `false`
+				</section>
+
+				<section data-markdown>
+					## Come rappresentare un insieme in JavaScript?
+				</section>
+
+				<section data-markdown>
+					## Rappresentazione estensiva
+
+```
+// ok per insiemi finiti e..."piccoli"!
+var Boolean = [true, false];
+```
+				</section>
+
+				<section data-markdown>
+					## Funzione caratteristica
+
+					Ad un insieme `A` posso associare il predicato `isA`
+
+					`isA(x) = true`, se `x ∈ A`
+
+					`isA(x) = false`, se `x ∉ A`
+				</section>
+
+				<section data-markdown>
+					Ad ogni predicato `isA` posso associare un insieme
+
+					`A = { x ∈ Any | isA(x) = true }`
+
+					ove `Any` è l'insieme universo
+				</section>
+
+				<section data-markdown>
+					## Insiemi ⇄ Predicati
+				</section>
+
+				<section data-markdown>
+					## Rappresentazione intensiva
+
+```
+function isNumber(x) {
+	return typeof x === 'number';
+}
+```
+				</section>
+
+				<section>
+					<h3>Insieme universo: <code>Any</code></h3>
+					<pre class="fragment"><code>
+function isAny(x) { return true; }
+					</code></pre>
+					<div class="fragment">
+						<h3>Insieme vuoto</h3>
+					</div>
+					<pre class="fragment"><code>
+function isEmptySet(x) { return false; }
+					</code></pre>
+					<div class="fragment">
+						<h3>Insieme di tutti gli array</h3>
+					</div>
+					<pre class="fragment"><code>
+Array.isArray
+					</code></pre>
+				</section>
+
+				<section  data-markdown>
+					## Sottoinsieme</h2>
+
+					`A ⊆ B` se per ogni `a ∈ A` vale `a ∈ B`
+
+```
+function isAge(x) {
+	return isNumber(x) && x >= 0;
+}
+```
+
+					( Subtypes )
+				</section>
+
+				<section data-markdown>
+					## Intersezione
+
+					`A ∩ B = { x ∈ Any | x ∈ A ∧ x ∈ B }`
+
+					```
+					function isAiB(x) {
+						return isA(x) && isB(x);
+					}
+					```
+
+					( Intersection types )
+				</section>
+
+				<section data-markdown>
+					## Unione
+
+					`A ∪ B = { x ∈ Any | x ∈ A ∨ x ∈ B }`
+
+```
+function isAuB(x) {
+	return isA(x) || isB(x);
+}
+```
+
+					( Sum types )
+				</section>
+
+				<section data-markdown>
+					## Prodotto cartesiano
+
+					`A ⨯ B = { (a, b) | a ∈ A, b ∈ B }`
+
+```
+// tuple
+function isAxB(xs) {
+	return Array.isArray(xs) && // è un array
+		xs.length === 2 && // è una generica tuple2
+		isA(xs[0]) && // controllo A
+		isB(xs[1]); // controllo B
+}
+```
+
+					( Product types )
+				</section>
+
+				<section data-markdown>
+					### **sum** types + **product** types = ADT (algebraic data types)
+				</section>
+
+				<section data-markdown>
+					altri prodotti cartesiani notevoli:
+
+					### Array
+
+					`A1 ⨯ A2 ⨯ ... = { (a1, a2, ... ) | ai ∈ Ai}`
+
+```
+Array.isArray
+```
+
+					### Liste
+
+					`A* = { (a_1, a_2, ... ) | a_i ∈ A}`
+
+```
+function isListOfNumbers(x) {
+	return Array.isArray(x) && x.every(isNumber);
+}
+```
+				</section>
+
+				<section data-markdown>
+					### Type combinators
+
+```
+function list(isA) {
+	var p = function (x) {
+		return Array.isArray(x) && x.every(isA);
+	};
+	p.kind = 'list'; // <- allows "runtime type introspection"
+	p.type = isA;
+	return p;
+}
+
+var isListOfNumbers = list(isNumber);
+var isMatrixOfNumbers = list(list(isNumber));
+...
+```
+
+					[https://github.com/gcanti/tcomb](https://github.com/gcanti/tcomb)
+					[https://github.com/gcanti/flowcheck](https://github.com/gcanti/flowcheck)
+
+				</section>
+
+				<section data-markdown contenteditable>
+					### Le funzioni sono insiemi
+
+					`C = { f: A -> B } ⊆ A ⨯ B`
+
+					se `(a, b1)` e `(a, b2) ∈ C` allora `b1 = b2`
+
+```
+// (a: int) => int
+function f(a) { return 2 * a; }
+
+"syntactic sugar" per:
+
+(1, 2)
+(2, 4)
+(3, 6)
+...
+```
+				</section>
+
+				<section>
+					<h2>Oggetti?</h2>
+					<div class="fragment">
+						<h3>Sono prodotti cartesiani mimetizzati tra funzioni e tuple...</h3>
+					</div>
+				</section>
+
+				<section data-markdown>
+					### Oggetti come funzioni (`Map`)
+
+```
+JavaScript           Math
+----------------------------------------
+
+var f = {            f: string -> number
+	"a": 1,          "a" -> 1
+	"b": 2,          "b" -> 2
+	"c": 3           "c" -> 3
+};
+
+f["b"] -> 2         f("b") -> 2
+```
+				</section>
+
+				<section data-markdown>
+					### Oggetti come tuple
+
+```
+object                      tuple
+----------------------------------------
+{                           [
+	"name": "Giulio",            "Giulio",
+	"surname": "Canti",          "Canti",
+	"age": 41                    41
+}                           ]
+
+function Person(name, surname, age /* <- tuple */) {
+	this.name = name;
+	this.surname = surname;
+	this.age = age;
+	/* ^-- object */
+}
+```
+				</section>
+
+				<section>
+					<h3>Fine primo tempo</h3>
+					<table>
+						<tr>
+							<th>Insiemi</th>
+							<th>Tipi</th>
+						</tr>
+						<tr>
+							<td>universo</td>
+							<td><code>Any</code></td>
+						</tr>
+						<tr>
+							<td>sottoinsiemi</td>
+							<td>number, string, ...<br/>subtypes</td>
+						</tr>
+						<tr>
+							<td>intersezioni</td>
+							<td>intersection types</td>
+						</tr>
+						<tr>
+							<td>unioni (disgiunte)</td>
+							<td>sum types</td>
+						</tr>
+						<tr>
+							<td>prodotti cartesiani</td>
+							<td>product types</td>
+						</tr>
+						<tr>
+							<td>funzioni<br/><code>f: A -> B</code></td>
+							<td>function types<br/><code>(a: A) => B</code></td>
+						</tr>
+					</table>
+				</section>
+
+				<section data-markdown>
+					# TypeScript
+				</section>
+
+				<section data-markdown>
+					## Che cos'è?
+
+					- ### Superset di JavaScript
+					- ### Static type checker
+					- ### Compiler (ES6)
+				</section>
+
+				<section>
+					<h2>"Optional typing"</h2>
+					<img src="img/xscript.png" style="width: 500px;"/>
+				</section>
+
+				<section data-markdown>
+					## Stats
+
+					- Microsoft
+					- parte nel 2012
+					- v1.4
+					- Anders Hejlsberg (C#, Delphi, Turbo Pascal)
+					- GitHub issues: 530 open, 953 closed
+				</section>
+
+				<section data-markdown>
+					## Setup
+
+					`npm install typescript`
+
+					## Usage
+
+					`tsc input.ts --out output.js`
+				</section>
+
+				<section data-markdown>
+					## Type inference
+
+```
+var i = 0; // i è di tipo `number`
+
+function f() {
+	return "hello"; // f restituisce un tipo `string`
+}
+
+var x: number = f(); // error TS2322: Type string is not assignable to type number
+```
+				</section>
+
+				<section data-markdown>
+					## Primitive
+
+```
+// var name: type [= value];
+
+var all: any;
+var num: number;
+var str: string;
+var bool: boolean;
+```
+				</section>
+
+				<section data-markdown>
+					## Attenzione!
+```
+var a: number = null; // ok per TypeScript
+var b: number = undefined; // ok per TypeScript
+```
+				</section>
+
+				<section data-markdown>
+				## Intersection types
+
+```
+// User-defined data type (1/2)
+interface Point {
+	x: number;
+	y: number;
+}
+
+var p: Point: {x: 1, y: 2};
+```
+
+```
+interface A {}
+interface B {}
+interface C extends A, B {} // <- intersection type
+```
+				</section>
+
+				<section data-markdown>
+				## Sum types
+
+```
+// dalla v1.4
+var x: number | string = 1;
+```
+				</section>
+
+				<section data-markdown>
+					## Product types
+				</section>
+
+				<section data-markdown>
+					### Tuples
+
+```
+var tuple: [string, number] = ['a', 1];
+```
+					### Lists
+```
+var list: Array&lt;number&gt; = [1, 2, 3];
+var list: number[] = [1, 2, 3];
+```
+					### Arrays
+```
+var arr: any[] = ['a', 2, 3];
+```
+				</section>
+
+				<section data-markdown>
+					### Objects
+
+```
+var point: {x: number; y: number;} = {x: 1, y: 2};
+```
+					### Mappe
+
+```
+var mymap: {[key: string]: number;} = {
+	a: 1,
+	b: 2,
+	c: 3
+};
+```
+				</section>
+
+				<!--
+				<section data-markdown>
+					### Enums (integers)
+```
+enum Align {Left, Right, Center, Justify}
+```
+
+```
+var Align;
+(function (Align) {
+    Align[Align["Left"] = 0] = "Left";
+    Align[Align["Right"] = 1] = "Right";
+    Align[Align["Center"] = 2] = "Center";
+    Align[Align["Justify"] = 3] = "Justify";
+})(Align || (Align = {}));
+```
+				</section>
+				-->
+
+				<section data-markdown>
+					## Classi (1/2)
+					```
+class Person {
+  name: string;
+  surname: string;
+  age: number;
+  constructor(name: string, surname: string, age: number) {
+    this.name = name;
+    this.surname = surname;
+    this.age = age;
+  }
+}
+
+var p = new Person(true, true, true);
+// error TS2345: Argument of type 'boolean' is not assignable
+// to parameter of type 'string'
+					```
+				</section>
+
+				<section data-markdown>
+					## Classi (2/2)
+					```
+// modifiers: public, private, protected
+class Person {
+  constructor(
+  	public name: string,
+  	public surname: string,
+  	public age: number) {
+  }
+}
+					```
+				</section>
+
+				<section data-markdown>
+					## Funzioni
+
+```
+function len(s: string): number {
+	return s.length;
+}
+```
+
+					ES6 fat arrow
+
+```
+var len = (s: string): number => s.length;
+```
+
+					Function types
+
+```
+function asyncOp(callback: (result: string) => any): void {
+	...
+}
+```
+				</section>
+
+				<section data-markdown>
+					### Type alias
+
+```
+// User-defined data type (2/2)
+
+type StringOrNumber = string | number;
+type Text = string | { text: string; };
+type Coordinates = [number, number];
+```
+				</section>
+
+				<section data-markdown>
+					## Moduli
+				</section>
+
+				<section data-markdown>
+					### Internal modules
+
+```
+module A {
+  module B {
+    export var value = 1;
+  }
+}
+
+console.log(A.B.value); // => 1
+```
+				</section>
+
+				<section data-markdown>
+					### External modules
+
+```
+// file mylib.ts
+var b = 1;
+export = b; // same as module.exports = b;
+```
+
+```
+// file myapp.ts
+import b = require('./mylib');
+```
+
+<!--
+- no `node_modules`
+- no `index.js`
+-->
+				</section>
+
+				<section data-markdown>
+					## Definition files
+
+```
+/// &lt;reference path="path/to/jquery.d.ts" /&gt;
+```
+
+https://github.com/borisyankov/DefinitelyTyped
+
+				</section>
+
+				<section data-markdown>
+					### Polimorfismo (AKA Generics)
+
+```
+function map&lt;A&gt;(xs: A[], f: (x: A) => A): A[] {
+	...
+}
+
+map([1, 2, 3], (x) => 'a'); // error!
+```
+
+					- funzioni
+					- classi
+					- interfaces
+
+				</section>
+
+				<section data-markdown>
+					## Compiler flags
+
+					- `--watch`
+					- `--sourceMap`
+					- `--noImplicitAny`
+					- `--target ES3-5-6`
+					- `--declaration`
+				</section>
+
+				<section data-markdown>
+					## Pros
+
+					- **Language Specification** (161 pagine)
+					- `--noImplicitAny`
+					- DefinitelyTyped
+					- IDE support (VS, WebStorm, Sublime)
+				</section>
+
+				<section data-markdown>
+					## Cons
+
+					- gestione manuale dei definition files
+					- nullable types
+					- no JSX support
+					- type erasure (!?)
+				</section>
+
+				<section data-markdown>
+					## Type erasure
+
+					> ...e tutti quei momenti andranno perduti nel tempo come lacrime nella pioggia...
+					  — Blade Runner
+				</section>
+
+				<section data-markdown>
+					# Flow
+				</section>
+
+				<section data-markdown>
+					## Che cos'è?
+
+					- ### Superset di JavaScript
+					- ### Static type checker
+				</section>
+
+				<section data-markdown>
+					## Stats
+
+					- Facebook
+					- novembre 2014
+					- v0.5
+					- GitHub issues: 153 open, 86 closed
+				</section>
+
+				<section data-markdown>
+					### Compatibile con TypeScript?
+
+					# No :-(
+				</section>
+
+				<section>
+					<table>
+						<tr>
+							<th>Flow</th>
+							<th>TypeScript</th>
+						</tr>
+						<!--
+						<tr>
+							<td><code>mixed</code></td>
+							<td><code>Object</code> oppure <code>{}</code></td>
+						</tr>
+						-->
+						<tr>
+							<td><code>Object</code></td>
+							<td><code>Object - (primitives | Function)</code></td>
+						</tr>
+						<tr>
+							<td><code>T</code></td>
+							<td><code>T - (null | void)</code></td>
+						</tr>
+						<tr>
+							<td><code>?T</code></td>
+							<td><code>T</code></td>
+						</tr>
+						<tr>
+							<td><code>A & B</code></td>
+							<td>interfaces+ function overloading</td>
+						</tr>
+						<tr>
+							<td><code>type alias (generics)</code></td>
+							<td>interfaces + type alias</td>
+						</tr>
+					</table>
+				</section>
+
+				<section data-markdown>
+					## Setup
+
+					Download Flow...
+
+					## Usage
+
+```
+flow check
+
+# oppure...
+
+flow start
+flow check
+```
+				</section>
+
+				<section data-markdown>
+					### .flowconfig
+
+```
+[ignore]
+
+[include]
+./node_modules
+
+[libs]
+...definition files here
+
+[options]
+```
+				</section>
+
+				<!--
+				<section data-markdown>
+					### Classes
+
+```
+/* @flow */
+
+// vanilla js
+function Person(name: string, surname: string, age: number) {
+  this.name = name;
+  this.surname = surname;
+  this.age = age;
+}
+
+var p1: Person = new Person("Giulio", "Canti", 41);
+var p2: number = p1; // error!
+p1.name = 1; // no error, ouch!
+```
+				</section>
+				-->
+
+				<section data-markdown>
+					### Type annotations nei commenti
+
+```
+/* @flow */
+
+function sum(a/*: number*/, b/*: number*/) {
+  return a + b;
+}
+
+sum('a', 2);
+// error: string This type is incompatible with number
+```
+				</section>
+
+				<section data-markdown>
+					### Classes
+
+```
+class Person {
+  name: string;
+  surname: string;
+  age: number;
+  constructor(name, surname, age) {
+    this.name = name;
+    this.surname = surname;
+    this.age = age;
+  }
+}
+```
+				</section>
+
+				<section data-markdown>
+					# React
+				</section>
+
+				<section data-markdown>
+					### JSX
+
+```
+var HelloMessage = React.createClass({
+  render() {
+    return &lt;div&gt;hello&lt;/div&gt;;
+  }
+});
+
+React.render(&lt;Hello /&gt;, document.body);
+// error: React element: Hello Unknown global name
+```
+				</section>
+
+				<section data-markdown>
+					### PropTypes (1/2)
+
+```
+var Foo = React.createClass({
+  propTypes: {
+    foo: React.PropTypes.number.isRequired
+  }
+});
+
+React.createElement(Foo, { foo: "not a number" });
+// string This type is incompatible with number
+```
+				</section>
+
+				<section data-markdown>
+					### PropTypes (2/2)
+
+```
+// v0.13
+class HelloMessage extends React.Component {
+  constructor(props: { name: string; }) {
+    super(props);
+  }
+  render() {
+    return &lt;div&gt;Hello {this.props.name}&lt;/div&gt;;
+  }
+}
+
+React.render(new HelloMessage({name: 1}), document.body);
+// error: number This type is incompatible with string
+```
+				</section>
+
+				<section data-markdown>
+					## Pros
+
+					- aggressive type inference
+					- non nullable types
+					- enums come stringhe
+					- Type annotations nei commenti
+					- better commonjs support
+					- JSX support
+				</section>
+
+				<section data-markdown>
+					## Cons
+
+					- cryptic error messages
+					- no Windows
+					- no `--noImplicitAny`
+					- no `import` o `export`
+					- type erasure
+				</section>
+
+				<section data-markdown>
+					# AtScript
+				</section>
+
+				<section data-markdown>
+					## Che cos'è?
+
+					- ### Superset di JavaScript
+					- ### compiled by Traceur
+				</section>
+
+				<section>
+					<img src="img/xscript.png" style="width: 500px;"/>
+				</section>
+
+				<section data-markdown>
+					## Risorse
+
+					- AtScript Primer
+					- https://github.com/angular/atscript-playground
+					- https://github.com/angular/angular (v2.0)
+				</section>
+
+				<section data-markdown>
+					### Runtime Type Assertions
+
+```js
+// AtScript...
+class MyClass {
+  methodA(name: string): int {
+    var length: int = name.length;
+    return length;
+  }
+}
+```
+
+```js
+// ... compiles to ES6
+import * as rtts from 'rtts';  // assert library (customizable)
+
+class MyClass {
+  methodA(name) {
+    rtts.type(name, rtts.string);
+    var length = rtts.type(name.length, rtts.int);
+    return rtts.returnType(length, rtts.int);
+  }
+}
+```
+				</section>
+
+				<section data-markdown>
+					### Runtime type introspection
+
+```js
+class MyClass {
+  constructor(name: string, list: Array) {}
+}
+```
+
+```js
+import * as rtts from 'rtts';
+
+class MyClass {
+  constructor(name, list) { }
+}
+
+MyClass.parameters = [
+  {is: rtts.string},
+  {is: Array}
+];
+```
+				</section>
+
+				<section data-markdown>
+					### Annotations
+
+```js
+@Component({selector: 'foo'})
+class MyComponent {
+  @Inject()
+  constructor(server: Server) {}
+}
+```
+
+```js
+class MyComponent {
+  constructor(server) {}
+}
+
+MyComponent.parameters = [{is:Server}];
+MyComponent.annotate = [
+  new Component({selector: 'foo'}),
+  new Inject()
+];
+```
+				</section>
+
+				<!--
+				<section data-markdown>
+					## Traceur flags
+
+```js
+{
+  "types": true,
+  "typeAssertions": true, // false in production
+  "typeAssertionModule": "assert", // path to assert library
+  "annotations": true
+}
+```
+
+https://github.com/gcanti/tcomb-ats
+				</section>
+				-->
+
+				<section>
+					<h2>Roadmap</h2>
+					<img src="img/atscript-roadmap.jpg"/>
+				</section>
+
+				<section data-markdown>
+					## Runtime checking
+
+					1. "It allows **free mixing of existing libraries** which do not have type annotations"
+					- "The **semantics** of types can be **left to the implementor**"
+					- "**Runtime type verification** can be used to verify that the JSON returned from the server is of a valid structure"
+					- "Since the type errors should be caught and resolved before pushing the code to production, **all of the assertions can be stripped** from production builds"
+				</section>
+
+				<section data-markdown>
+					> It is far, far easier to make a correct program fast than it is to make a fast program correct.
+    				— Herb Sutter
+				</section>
+
+				<section data-markdown>
+					# Fine
+
+					## [https://github.com/gcanti](https://github.com/gcanti)
+					## [@GiulioCanti](https://twitter.com/GiulioCanti)
+				</section>
+
+			</div>
+
+		</div>
+
+		<script src="../js/head.min.js"></script>
+		<script src="../js/reveal.js"></script>
+
+		<script>
+
+			// Full list of configuration options available at:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+
+				transition: 'none', // none/fade/slide/convex/concave/zoom
+
+				// Optional reveal.js plugins
+				dependencies: [
+					{ src: '../js/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: '../js/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: '../js/highlight.js', async: true, condition: function() { return !!document.querySelector( 'pre code' ); }, callback: function() { hljs.initHighlightingOnLoad(); } }
+				]
+			});
+
+		</script>
+
+	</body>
+  <!-- Google Analytics -->
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-53674495-1', 'auto');
+    ga('send', 'pageview');
+
+  </script>
+</html>

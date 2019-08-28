@@ -1,0 +1,15 @@
+# Dependencies
+highlighter: rouge
+markdown: kramdown
+
+# Setup
+title: Giulio Canti's Blog
+url: https://gcanti.github.io
+author:
+ name: Giulio Canti
+ url: http://gcanti.github.io
+ email: giulio.canti@gmail.com
+ emailHtml: "<a href='mailto:giulio.canti@gmail.com'>giulio.canti@gmail.com</a>"
+baseurl: /
+about: "<a href='/about.html'>about me</a>"
+blog: "<a href='/'>blog</a>"

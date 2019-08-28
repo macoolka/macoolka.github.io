@@ -1,0 +1,27 @@
+---
+layout: default
+title: Giulio Canti
+---
+
+<link href="/atom.xml" rel="alternate" type="application/rss+xml" title="{{ site.title }}" />
+<h1>{{ site.author.name }}</h1>
+<hr/>
+<p>
+    Hi, thanks for checking out my blog. I’m a full stack web developer who loves working with open source technology.
+</p>
+<p>
+    Learn {{ site.about }}.
+</p>
+<h2>Articles</h2>
+<ul>
+  {% for post in site.posts %}
+    <li>
+      <a href="{{ post.url }}">{{ post.date | date_to_string }} - {{ post.title }}</a>
+    </li>
+  {% endfor %}
+  {% for draft in site.drafts %}
+    <li>
+      <a href="{{ draft.url }}">{{ draft.date | date_to_string }} - {{ draft.title }}</a>
+    </li>
+  {% endfor %}
+</ul>

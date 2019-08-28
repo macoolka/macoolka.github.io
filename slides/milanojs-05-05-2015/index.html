@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>Runtime type introspection</title>
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+		<link rel="stylesheet" href="../css/reveal.css">
+		<link rel="stylesheet" href="../css/serif.css">
+
+		<!-- Code syntax highlighting -->
+		<link rel="stylesheet" href="../css/zenburn.css">
+		<style>
+		pre code.hljs {
+			padding: 15px;
+		}
+		</style>
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? '../css/pdf.css' : '../css/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="../js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<div class="slides">
+
+				<section data-markdown>
+## Runtime type introspection
+
+### Giulio Canti
+				</section>
+
+				<section data-markdown>
+## Che cos'è?
+
+> type introspection is the ability of a program to examine the type or properties of an object at runtime
+				</section>
+
+        <section data-markdown>
+## Come rappresentare i tipi in modo che siano accessibili a runtime?
+        </section>
+
+        <section data-markdown>
+## Con i predicati...
+
+```
+// il tipo stringa
+const Str = (x) => typeof x === 'string';
+
+// meta informazioni
+Str.meta = {
+	kind: 'irreducible'
+};
+```
+        </section>
+
+        <section data-markdown>
+          ## ... e i combinators
+
+Combinano i tipi già definiti per ottenerne uno nuovo
+
+```
+// list combinator
+const list = (type) => {
+  const p = (x) => Array.isArray(x) && x.every(type);
+  p.meta = {
+	  kind: 'list',
+	  type
+  };
+  return p;
+};
+
+const Words = list(Str);
+
+console.log(Words.meta.kind); // => 'list'
+console.log(Words.meta.type); // => Str
+```
+        </section>
+
+        <section data-markdown>
+### [github.com/gcanti/tcomb](https://gcanti.github.io/tcomb)
+
+(runtime type checking library)
+
+`subtype`, `enums`, `maybe`, `struct`, `list`, `tuple`, `union`, `dict`, ...
+        </section>
+
+        <section data-markdown>
+        ## Modelli di dominio
+```
+// a list of strings
+var Words = list(Str);
+
+var Post = struct({
+  title: Str,
+  content: Str,
+  tags: Words // <- nested structure
+});
+```
+        </section>
+
+        <section data-markdown>
+## Asserts
+
+```
+const assert = (candidate, type) => {
+	if (!type(candidate))
+		throw new TypeError('assert failed');
+}
+
+assert(1, Str); // => throws
+```
+        </section>
+
+        <section data-markdown>
+## Validations
+
+```
+validate(candidate, type) => {errors: Array<Error>; value: any;}
+```
+        </section>
+
+        <section data-markdown>
+### [github.com/gcanti/tcomb-validation](https://github.com/gcanti/tcomb-validation)
+
+(validation library)
+
+## [Demo](https://gcanti.github.io/resources/tcomb-validation/playground/playground.html)
+        </section>
+
+				<section>
+					<h2>Form generation</h2>
+					<img src="img/schema.png" style="border: 0; padding: 1em;"/>
+				</section>
+
+        <section data-markdown>
+### [github.com/gcanti/tcomb-form](https://github.com/gcanti/tcomb-form)
+
+(c'è anche una versione anche per react-native)
+
+## [Demo](https://gcanti.github.io/tcomb-form)
+        </section>
+
+				<section data-markdown>
+## Fine
+
+### [https://github.com/gcanti](https://github.com/gcanti)
+### [@GiulioCanti](https://twitter.com/GiulioCanti)
+				</section>
+
+				<section>
+					<pre class="fragment"><code>
+Array.isArray
+					</code></pre>
+				</section>
+
+			</div>
+
+		</div>
+
+		<script src="../js/head.min.js"></script>
+		<script src="../js/reveal.js"></script>
+
+		<script>
+
+			// Full list of configuration options available at:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+
+				transition: 'none', // none/fade/slide/convex/concave/zoom
+
+				// Optional reveal.js plugins
+				dependencies: [
+					{ src: '../js/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: '../js/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: '../js/highlight.js', async: true, condition: function() { return !!document.querySelector( 'pre code' ); }, callback: function() { hljs.initHighlightingOnLoad(); } }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>

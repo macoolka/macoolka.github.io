@@ -1,0 +1,25 @@
+---
+layout: default
+title: demo - What if your domain model could validate the UI for free?
+---
+
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+
+<!-- signup.html -->
+
+<script type="text/javascript" src="tcomb.js"></script>
+<script type="text/javascript" src="domain.js"></script>
+<script type="text/javascript" src="signup.js"></script>
+
+<form role="form" method="post">
+  <div class="form-group">
+    <input type="text" id="username" placeholder="Username" class="form-control"/>
+  </div>
+  <div class="form-group">
+    <input type="password" id="password" placeholder="Password" class="form-control"/>
+  </div>
+  <div class="form-group">
+    <input type="text" id="email" placeholder="Email (optional)" class="form-control"/>
+  </div>
+  <button class="btn btn-primary btn-block">Sign up</button>
+</form>

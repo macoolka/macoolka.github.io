@@ -1,0 +1,51 @@
+body {
+  color: #333;
+}
+
+.header {
+  border-bottom: 1px solid #eee;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+}
+.header .img-circle {
+  padding: 10px;
+  border: 1px solid #eee;
+}
+
+.repo-link { 
+  padding: 40px 0 0 0;
+}
+
+textarea.form-control {
+  font-family: Menlo, Consolas, monospace;
+  font-size: 12px;
+  height: 200px;
+}
+
+pre {
+  background-color: #fff;
+  border-width: 0;
+}
+
+pre.jsx-preamble {
+  border-width: 1px;
+  background-color: #f5f5f5;
+  margin-bottom: -5px;
+}
+
+.docs {
+  margin-top: 50px;
+  color: #555;
+}
+.docs p.lead {
+  border-bottom: 1px solid #eee;
+}
+.docs code {
+  padding: 0;
+  background-color: inherit;
+  color: #000;
+}
+
+.comment {
+  color: #999;
+}

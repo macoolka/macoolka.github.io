@@ -1,0 +1,271 @@
+---
+layout: clean
+title: Universal VDOM demo
+---
+
+<!--[if lt IE 9]>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/es6-shim/0.18.0/es6-shim.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/es6-shim/0.18.0/es6-sham.min.js"></script>
+<![endif]-->
+<link type="text/css" rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css"/>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/react/0.11.2/react.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mithril/0.1.22/mithril.min.js"></script>
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      <h1>Universal VDOM</h1>
+      <p class="lead">Proof of concept: with the same controller and view outputs React.js and Mithril components</p>
+      <p><b>Goal</b>: as a frontend library author I'd like to target as many frameworks as possible. My components might return a universal VDOM and then compile them to different frameworks.</p>
+      <p>-> <a href="http://www.reddit.com/r/javascript/comments/2jav2q/is_there_any_good_standalone_implementation_of/">Reddit dicussion</a> on VDOM</p>
+    </div>
+    <div class="col-md-6">
+      <div class="panel panel-default">
+        <div class="panel-heading">React component</div>
+        <div class="panel-body">
+          <div id="react"></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="panel panel-default">
+        <div class="panel-heading">Mithril module</div>
+        <div class="panel-body">
+          <div id="mithril"></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-12">
+      <h2>Source (<a href="https://gist.github.com/gcanti/52d6240ee8e51b857985">Gist</a>)</h2>
+      <pre>
+// testable view: you can inject a state or a mock controller
+function view(state, controller) {
+  return {
+    tag: 'div',
+    children: [
+      {
+        tag: 'h3',
+        children: state.count
+      },
+      {
+        tag: 'button',
+        attrs: {
+          className: {'btn': true, 'btn-primary': true},
+          onClick: controller.doIncrement
+        },
+        children: 'Click me'
+      }
+    ]
+  };
+}
+
+function controller(state, setState) {
+  return {
+    doIncrement: function () {
+      setState({count: state.count + 1});
+    }
+  };
+}
+      </pre>
+    </div>
+  </div>
+</div>
+<script>
+  // React v0.11.2
+  // Mithril 0.1.22
+
+  // demo live here http://gcanti.github.io/resources/universal-vdom/demo.html
+
+  /*
+    
+    UNIVERSAL VDOM
+
+    type Node = {
+      tag: string,
+      attrs: Nil | Attrs,
+      children: Child | Array<Child>
+    }
+
+    type Nil = null | undefined
+
+    type Attrs = {
+      className: Nil | string | Array<string> | ClassName,
+      style: Nil | Style,
+      onClick: function,
+      etc..
+    }
+
+    type ClassName = Dictionary<boolean> // like React cx()
+
+    type Style = {
+      'text-align': string,
+      'z-index': number,
+      etc..
+    }
+
+    type Child = Nil | string | Node
+
+  */
+
+  //
+  // helpers
+  //
+
+  // transforms an array or an hash of classes to a string
+  function cx(classNames) {
+    if (Array.isArray(classNames)) {
+      return classNames.join(' ');
+    } else if (typeof classNames === 'object') {
+      return Object.keys(classNames).filter(function(className) {
+        return classNames[className];
+      }).join(' ');
+    }
+    return classNames;
+  }
+
+  function mixin(x, y) {
+    for (var k in y) {
+      if (y.hasOwnProperty(k)) x[k] = y[k];
+    }
+    return x;
+  }
+
+  // useful to preserve the original hash
+  function clone(x) {
+    return mixin({}, x);
+  }
+
+  //
+  // React
+  //
+
+  // toReactElement: VDOM -> ReactElement
+  // transforms a universal vnode to a React renderable
+  function toReactElement(node) {
+    if (Array.isArray(node)) {
+      if (node.length === 1) {
+        return toReactElement(node[0]);
+      }
+      return node.map(toReactElement);
+    } else if (typeof node === 'object') {
+      var tag = node.tag;
+      if (typeof tag === 'string') {
+        tag = React.DOM[tag];
+      }
+      var attrs = node.attrs;
+      if (attrs) {
+        attrs = clone(attrs);
+        attrs.className = cx(attrs.className);
+      }
+      var children = toReactElement(node.children);
+      // use `apply` to avoid React warnings
+      return React.createElement.apply(React, [tag, attrs].concat(children));
+    }
+
+    return node;
+  }
+
+  // toReactClass: (Func, Func) -> ReactClass
+  // tranforms a pair (controller, view) to a React class
+  function toReactClass(controller, view) {
+    return React.createClass({
+      render: function () {
+        var state = this.props;
+        var v = view(state, controller(state, this.setProps.bind(this)));
+        return toReactElement(v);
+      }
+    });
+  }
+
+  //
+  // Mithril
+  //
+
+  // toMithrilElement: VDOM -> MithrilView
+  // transforms a universal vnode to a Mithril view
+  function toMithrilElement(node) {
+    if (Array.isArray(node)) {
+      if (node.length === 1) {
+        return toMithrilElement(node[0]);
+      }
+      return node.map(toMithrilElement);
+    } else if (typeof node === 'object') {
+      var tag = node.tag;
+      var attrs = node.attrs;
+      if (attrs) {
+        attrs = clone(attrs);
+        attrs.className = cx(attrs.className);
+        attrs.onclick = attrs.onClick;
+        delete attrs.onClick;
+      }
+      var children = toMithrilElement(node.children);
+      if (attrs) {
+        return m(tag, attrs, children);
+      }
+      return m(tag, children);
+    }
+
+    return node;
+  }
+
+  // toMithrilModule: (Func, Func, Obj) -> MithrilModule
+  // tranforms a tuple (controller, view, state) to a Mithril module
+  function toMithrilModule(controller, view, state) {
+    controller = controller(state, function (state) {
+      mixin(module.state, state);
+    });
+    var module = {
+      state: state,
+      controller: function () {
+        return controller; 
+      },
+      view: function () {
+        return toMithrilElement(view(module.state, controller));
+      }
+    };
+    return module;
+  }
+
+  //
+  // example 
+  // Note how both controller and view are decoupled from React and Mithril
+  // 
+
+  function controller(state, setState) {
+    return {
+      doIncrement: function () {
+        // `state` and `setState` are generic
+        setState({count: state.count + 1});
+      }
+    };
+  }
+
+  function view(state, controller) {
+    return {
+      tag: 'div',
+      children: [
+        {
+          tag: 'h3',
+          children: state.count
+        },
+        {
+          tag: 'button',
+          attrs: {
+            className: {'btn': true, 'btn-primary': true},
+            onClick: controller.doIncrement
+          },
+          children: 'Click me'
+        }
+      ]
+    };
+  }
+
+  var state = {count: 0};
+
+  // React
+  var ReactComponent = toReactClass(controller, view);
+  React.renderComponent(ReactComponent(state), document.getElementById('react'));
+
+  // Mithril
+  var MithrilModule = toMithrilModule(controller, view, state);
+  m.module(document.getElementById('mithril'), MithrilModule);
+</script>
